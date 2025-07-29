@@ -5,7 +5,7 @@
 import UIKit
 
 // The Task model
-struct Task {
+struct Task: Codable {
 
     // The task's title
     var title: String
@@ -58,19 +58,51 @@ extension Task {
     static func save(_ tasks: [Task]) {
 
         // TODO: Save the array of tasks
+        let defaults = UserDefaults.standard
+        let key = "SavedTasks"
+        
+        // Encode the tasks array to Data
+        let encodedData = try? JSONEncoder().encode(tasks)
+        
+        defaults.set(encodedData, forKey: key)
+        
     }
+    
 
     // Retrieve an array of saved tasks from UserDefaults.
     static func getTasks() -> [Task] {
         
         // TODO: Get the array of saved tasks from UserDefaults
-
-        return [] // 👈 replace with returned saved tasks
+        let defaults = UserDefaults.standard
+        let key = "SavedTasks"
+        
+        // Retrieve the saved data
+        guard let savedData = defaults.data(forKey: key) else {
+            return [] // If no data found, return an empty array
+        }
+        
+        let decodedTasks = try? JSONDecoder().decode([Task].self, from: savedData)
+        
+        return decodedTasks ?? [] // 👈 replace with returned saved tasks
     }
 
     // Add a new task or update an existing task with the current task.
     func save() {
 
         // TODO: Save the current task
+        // 1. Get the current saved tasks
+        
+        var tasks = Task.getTasks()
+        
+        // 2. Check if the task already exists
+        if let exitingTaskIndex = tasks.firstIndex(where: { $0.id == self.id }) {
+            tasks.remove(at: exitingTaskIndex) // Remove the existing task
+            tasks.insert(self, at: exitingTaskIndex) // Insert the updated task at the same index
+            
+        } else {
+            tasks.append(self) // If the task doesn't exist, append the new task
+        }
+        
+        Task.save(tasks) // Save the updated tasks array
     }
 }
